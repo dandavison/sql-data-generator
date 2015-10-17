@@ -16,12 +16,29 @@ def generate_data(text):
 def get_columns(create_table_stmnt):
     has_foreign_key = False
     columns = []
-    for column in _get_columns(create_table_stmnt):
-        columns.append(column)
+    column = {}
+    for token in _get_tokens(create_table_stmnt):
+
+        if isinstance(token, sql.Identifier):
+            if 'name' in column:
+                assert is_complete_column(column)
+                columns.append(column)
+                column = {}
+            column['name'] = token.value
+        else:
+            import ipdb ; ipdb.set_trace()
+
+    assert is_complete_column(column)
+    columns.append(column)
+
     return columns
 
 
-def _get_columns(create_table_stmnt):
+def is_complete_column(column):
+    return column.viewkeys() == {'name'}
+
+
+def _get_tokens(create_table_stmnt):
     for tok1 in create_table_stmnt.tokens:
         if isinstance(tok1, sql.Function):
             for tok2 in tok1.tokens:
