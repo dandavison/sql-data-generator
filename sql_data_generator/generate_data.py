@@ -49,10 +49,8 @@ def flatten_tokens(tokens):
 
 def filter_tokens(tokens):
     for token in tokens:
-        if not ((hasattr(token, 'ttype') and
-                 token.ttype == sqlparse.tokens.Whitespace) or
-                (hasattr(token, 'ttype') and
-                 token.ttype == sqlparse.tokens.Newline) or
+        if not (is_token(token, sqlparse.tokens.Whitespace) or
+                is_token(token, sqlparse.tokens.Newline) or
                 token.match(sqlparse.tokens.Punctuation, '(') or
                 token.match(sqlparse.tokens.Punctuation, ')')):
             yield token
@@ -99,6 +97,10 @@ def get_create_table_statements(statements):
 
 def is_foreign_key_info(token):
     return token.value == 'FOREIGN'
+
+
+def is_token(obj, ttype):
+    return hasattr(obj, 'ttype') and obj.ttype == ttype
 
 
 if __name__ == '__main__':
