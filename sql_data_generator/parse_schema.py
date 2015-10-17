@@ -1,6 +1,17 @@
 import sqlparse
 
 
+COLUMN_TYPES = {
+    'bigint',
+    'char',
+    'decimal',
+    'int',
+    'smallint',
+    'tinyint',
+    'varchar',
+}
+
+
 def parse_schema(text):
     statements = sqlparse.parse(text)
     tables = []
@@ -18,7 +29,7 @@ def get_columns(create_table_stmnt):
 
     parenthesized_group = get_parenthesized_group(create_table_stmnt)
     tokens = flatten_tokens(parenthesized_group.tokens)
-    tokens = filter_tokens(tokens)
+    tokens = drop_ignored_tokens(tokens)
     token_groups = split_tokens_on_commas(tokens)
 
     columns = []
@@ -37,8 +48,19 @@ def get_columns(create_table_stmnt):
             column['keyword'] = token.value
 
         for token in group:
-            if (isinstance(token, sqlparse.sql.Function) or (
-                    is_token(token, sqlparse.tokens.Name.Builtin))):
+            if isinstance(token, sqlparse.sql.Function):
+                column_type, arguments = parse_unary_function(token)
+
+                if column_type in COLUMN_TYPES:
+                    column.update({
+                        'type': column_type,
+                        'type_arguments': map(int, arguments.split(',')),
+                    })
+                else:
+                    print >>sys.stderr, ("Unrecognized column type: %s" %
+                                         column_type)
+
+            elif is_token(token, sqlparse.tokens.Name.Builtin):
                 column['type'] = token.value
 
         columns.append(column)
@@ -55,7 +77,7 @@ def flatten_tokens(tokens):
             yield token
 
 
-def filter_tokens(tokens):
+def drop_ignored_tokens(tokens):
     for token in tokens:
         if not (is_token(token, sqlparse.tokens.Whitespace) or
                 is_token(token, sqlparse.tokens.Newline) or
@@ -112,9 +134,18 @@ def is_foreign_key_info(token):
     return token.value == 'FOREIGN'
 
 
+def parse_unary_function(token):
+    identifier, parenthesis = drop_ignored_tokens(token.tokens)
+    assert isinstance(identifier, sqlparse.sql.Identifier)
+    assert isinstance(parenthesis, sqlparse.sql.Parenthesis)
+    open_paren, value, close_paren = parenthesis.tokens
+    assert is_punctuation(open_paren, '(')
+    assert is_punctuation(close_paren, ')')
+    return identifier.value, value.value
+
+
 def is_punctuation(token, value):
-    return (isinstance(token, sqlparse.sql.Parenthesis) and
-            token.match(sqlparse.tokens.Punctuation, value))
+    return token.match(sqlparse.tokens.Punctuation, value)
 
 
 def is_token(obj, ttype):
