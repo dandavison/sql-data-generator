@@ -59,8 +59,8 @@ def filter_tokens(tokens):
     for token in tokens:
         if not (is_token(token, sqlparse.tokens.Whitespace) or
                 is_token(token, sqlparse.tokens.Newline) or
-                token.match(sqlparse.tokens.Punctuation, '(') or
-                token.match(sqlparse.tokens.Punctuation, ')')):
+                is_punctuation(token, '(') or
+                is_punctuation(token, ')')):
             yield token
 
 
@@ -110,6 +110,11 @@ def get_create_table_statements(statements):
 
 def is_foreign_key_info(token):
     return token.value == 'FOREIGN'
+
+
+def is_punctuation(token, value):
+    return (isinstance(token, sqlparse.sql.Parenthesis) and
+            token.match(sqlparse.tokens.Punctuation, value))
 
 
 def is_token(obj, ttype):
