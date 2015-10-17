@@ -1,17 +1,28 @@
+import mock
 import sqlparse
 
 
 COLUMN_TYPES = {
     'bigint',
     'char',
+    'datetime',
     'decimal',
     'int',
+    'longtext',
     'smallint',
     'tinyint',
     'varchar',
 }
 
+# Add missing keywords to parser
+KEYWORDS = dict(
+    sqlparse.keywords.KEYWORDS.items() + [
+        ('DATETIME', sqlparse.tokens.Name.Builtin),
+        ('LONGTEXT', sqlparse.tokens.Name.Builtin),
+    ]
+)
 
+@mock.patch.object(sqlparse.lexer, 'KEYWORDS', KEYWORDS)
 def parse_schema(text):
     statements = sqlparse.parse(text)
     tables = []
