@@ -19,7 +19,7 @@ def get_columns(create_table_stmnt):
     column = {}
     for token in _get_tokens(create_table_stmnt):
 
-        if isinstance(token, sql.Identifier):
+        if token.ttype == tokens.Name:
             if 'name' in column:
                 assert is_complete_column(column)
                 columns.append(column)
@@ -45,10 +45,12 @@ def _get_tokens(create_table_stmnt):
                 if isinstance(tok2, sql.Parenthesis):
                     for tok3 in tok2.tokens:
                         if isinstance(tok3, sql.Identifier):
+                            [tok3] = tok3.tokens
                             yield tok3
                         elif isinstance(tok3, sql.IdentifierList):
                             for tok4 in tok3.tokens:
                                 if isinstance(tok4, sql.Identifier):
+                                    [tok4] = tok4.tokens
                                     yield tok4
 
 
