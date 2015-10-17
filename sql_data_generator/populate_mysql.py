@@ -139,36 +139,36 @@ test_data = [
     {
         "name": "status",
         "columns": [
-            {'name': "current", 'type': "TINYINT", 'width': 4},
-            {'name': "start_date", 'type': "DATETIME", 'width': 40},
-            {'name': "employee_id", 'type': "INT", 'width': 4,
+            {'name': "current", 'type': "TINYINT", 'type_arguments': 4},
+            {'name': "start_date", 'type': "DATETIME", 'type_arguments': 40},
+            {'name': "employee_id", 'type': "INT", 'type_arguments': 4,
              "foreign_key_table": "employees"},
         ]
     },
     {
         "name": "employees",
         "columns": [
-            {'name': "id", 'type': "INT", 'width': 4},
-            {'name': "empoyee_name", 'type': "VARCHAR", 'width': 40},
+            {'name': "id", 'type': "INT", 'type_arguments': 4},
+            {'name': "empoyee_name", 'type': "VARCHAR", 'type_arguments': 40},
         ]
     },
     {
         "name": "schedule",
         "columns": [
-            {'name': "dept_no", 'type': "CHAR", 'width': 4},
-            {'name': "dept_name", 'type': "VARCHAR", 'width': 40},
-            {'name': "employee_id", 'type': "INT", 'width': 4,
+            {'name': "dept_no", 'type': "CHAR", 'type_arguments': 4},
+            {'name': "dept_name", 'type': "VARCHAR", 'type_arguments': 40},
+            {'name': "employee_id", 'type': "INT", 'type_arguments': 4,
              "foreign_key_table": "employees"},
-            {'name': "department_id", 'type': "INT", 'width': 4,
+            {'name': "department_id", 'type': "INT", 'type_arguments': 4,
              "foreign_key_table": "departments"},
         ]
     },
     {
         "name": "departments",
         "columns": [
-            {'name': "id", 'type': "CHAR", 'width': 4},
-            {'name': "dept_name", 'type': "VARCHAR", 'width': 40},
-            {'name': "employee_id", 'type': "INT", 'width': 4,
+            {'name': "id", 'type': "CHAR", 'type_arguments': 4},
+            {'name': "dept_name", 'type': "VARCHAR", 'type_arguments': 40},
+            {'name': "employee_id", 'type': "INT", 'type_arguments': 4,
              "foreign_key_table": "employees"},
         ]
     },
