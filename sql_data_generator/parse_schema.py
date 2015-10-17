@@ -11,7 +11,8 @@ where `column` is of the form
   'name': string,
   'type': "int"|"varchar"|etc,
   'type_arguments': [int],
-  'foreign_key_table': string|None
+  'foreign_key_table': string|None,
+  'foreign_key_column': string|None,
 }
 """
 import mock
@@ -30,7 +31,11 @@ COLUMN_TYPES = {
     'varchar',
 }
 
-# Add missing keywords to parser
+CONSTRAINT = 'CONSTRAINT'
+FOREIGN = 'FOREIGN'
+KEY = 'KEY'
+REFERENCES = 'REFERENCES'
+
 KEYWORDS = dict(
     sqlparse.keywords.KEYWORDS.items() + [
         ('DATETIME', sqlparse.tokens.Name.Builtin),
@@ -38,6 +43,7 @@ KEYWORDS = dict(
     ]
 )
 
+# Add missing keywords to parser
 @mock.patch.object(sqlparse.lexer, 'KEYWORDS', KEYWORDS)
 def parse_schema(text):
     statements = sqlparse.parse(text)
@@ -60,40 +66,48 @@ def get_columns(create_table_stmnt):
     tokens = drop_ignored_tokens(tokens)
     token_groups = split_tokens_on_commas(tokens)
 
-    columns = []
+    columns = {}
     for group in token_groups:
 
-        column = {}
-        token, group = group[0], group[1:]
+        if isinstance(group[0], sqlparse.sql.Identifier):
+            token, group = group[0], group[1:]
+            column = {'name': token.value}
+            for token in group:
+                if isinstance(token, sqlparse.sql.Function):
+                    column_type, arguments = parse_unary_function(token)
 
-        if isinstance(token, sqlparse.sql.Identifier):
-            assert 'name' not in column
-            column['name'] = token.value
+                    if column_type in COLUMN_TYPES:
+                        column.update({
+                            'type': column_type,
+                            'type_arguments': map(int, arguments.split(',')),
+                        })
+                    else:
+                        print >>sys.stderr, ("Unrecognized column type: %s" %
+                                             column_type)
+
+                elif is_token(token, sqlparse.tokens.Name.Builtin):
+                    column['type'] = token.value
+
+            columns[column['name']] = column
+
         else:
-            assert (hasattr(token, 'ttype') and
-                    token.ttype == sqlparse.tokens.Keyword)
-            column['name'] = None
-            column['keyword'] = token.value
+            # key/constraint declaration
+            if is_keyword(group[0], CONSTRAINT):
+                group = iter(group)
+                for token in group:
+                    if is_keyword(token, FOREIGN):
+                        assert is_keyword(next(group), KEY)
+                        fk_column_name = (
+                            parse_single_parenthesized_expression(next(group)))
+                        assert is_keyword(next(group), REFERENCES)
+                        target_table_name, target_column_name = (
+                            parse_unary_function(next(group)))
+                        columns[fk_column_name].update({
+                            'foreign_key_table': target_table_name,
+                            'foreign_key_column': target_column_name,
+                        })
 
-        for token in group:
-            if isinstance(token, sqlparse.sql.Function):
-                column_type, arguments = parse_unary_function(token)
-
-                if column_type in COLUMN_TYPES:
-                    column.update({
-                        'type': column_type,
-                        'type_arguments': map(int, arguments.split(',')),
-                    })
-                else:
-                    print >>sys.stderr, ("Unrecognized column type: %s" %
-                                         column_type)
-
-            elif is_token(token, sqlparse.tokens.Name.Builtin):
-                column['type'] = token.value
-
-        columns.append(column)
-
-    return columns
+    return columns.values()
 
 
 def flatten_tokens(tokens):
@@ -171,11 +185,17 @@ def is_foreign_key_info(token):
 def parse_unary_function(token):
     identifier, parenthesis = drop_ignored_tokens(token.tokens)
     assert isinstance(identifier, sqlparse.sql.Identifier)
-    assert isinstance(parenthesis, sqlparse.sql.Parenthesis)
-    open_paren, value, close_paren = parenthesis.tokens
+    fn_name = identifier.value
+    value = parse_single_parenthesized_expression(parenthesis)
+    return fn_name, value
+
+
+def parse_single_parenthesized_expression(token):
+    assert isinstance(token, sqlparse.sql.Parenthesis)
+    open_paren, value, close_paren = token.tokens
     assert is_punctuation(open_paren, '(')
     assert is_punctuation(close_paren, ')')
-    return identifier.value, value.value
+    return value.value
 
 
 def is_punctuation(token, value):
@@ -184,6 +204,10 @@ def is_punctuation(token, value):
 
 def is_token(obj, ttype):
     return hasattr(obj, 'ttype') and obj.ttype == ttype
+
+
+def is_keyword(obj, keyword):
+    return is_token(obj, sqlparse.tokens.Keyword) and obj.value == keyword
 
 
 if __name__ == '__main__':
