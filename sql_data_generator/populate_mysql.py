@@ -69,65 +69,76 @@ data_type_map = {
 }
 
 
-def generate_rows(table_list):
-    statements = []
-    for table in table_list:
-        generate_rows(table)
+class Tables(object):
 
-    #     name = table['name']
-    #     columns = []
-    #     values = []
+    def __init__(self, table_list):
+        self.table_dict = self.get_table_dict(table_list)
 
-    #     for column in table['columns']:
-    #         columns.append(column['name'])
-    #         random_data = get_random_data(column['type'])
-    #         values.append(random_data)
+    def get_table_dict(self, table_list):
+        table_dict = {}
 
-    #     statements.append(insert_statement(name, columns, values))
+        for table in table_list:
+            name = table['name']
+            table_dict[name] = {}
+            table_dict[name]['columns'] = table['columns']
+            table_dict[name]['visited'] = False
 
-    # return write_statements_to_file(statements)
+        return table_dict
 
+    def generate_rows_all_tables(self):
+        tables = self.table_dict
+        statements = []
+        for table in tables:
+            statements.append(self.generate_rows(table))
 
-def generate_rows(table):
-    statements = []
-    for table in table_list:
-        name = table['name']
+        return self.write_statements_to_file(statements)
+
+    def generate_rows(self, table_name):
+        table = self.table_dict[table_name]
         columns = []
         values = []
 
         for column in table['columns']:
+            if 'foreign_key_table' in column:
+                import ipdb; ipdb.set_trace()
+
+                self.generate_rows(self.table_dict['foreign_key_table'])
             columns.append(column['name'])
-            random_data = get_random_data(column['type'])
+            random_data = self.get_random_data(column['type'])
             values.append(random_data)
 
-        statements.append(insert_statement(name, columns, values))
+        return self.insert_statement(table_name, columns, values)
 
-    return write_statements_to_file(statements)
+    def get_random_data(self, data_type):
+        return data_type_map[data_type]['return']
 
+    def insert_statement(self, table_name, column_names, column_values):
+        return 'INSERT INTO %s (%s) VALUES (%s);' % (table_name,
+                                                     ', '.join(column_names),
+                                                     ', '.join(column_values)
+                                                     )
 
-def get_random_data(data_type):
-    return data_type_map[data_type]['return']
-
-
-def insert_statement(table_name, column_names, column_values):
-    return 'INSERT INTO %s (%s) VALUES (%s);' % (table_name,
-                                                 ', '.join(column_names),
-                                                 ', '.join(column_values)
-                                                 )
-
-
-def write_statements_to_file(statements):
-    with open(FILEPATH, 'w') as f:
-        for statement in statements:
-            f.write(statement + "\n\n")
-    print statements
+    def write_statements_to_file(self, statements):
+        with open(FILEPATH, 'w') as f:
+            for statement in statements:
+                f.write(statement + "\n\n")
+        print statements
 
 
 test_data = [
     {
+        "name": "status",
+        "columns": [
+            {'name': "current", 'type': "TINYINT", 'width': 4},
+            {'name': "start_date", 'type': "DATETIME", 'width': 40},
+            {'name': "employee_id", 'type': "INT", 'width': 4,
+             "foreign_key_table": "employees"},
+        ]
+    },
+    {
         "name": "employees",
         "columns": [
-            {'name': "employee_no", 'type': "CHAR", 'width': 4},
+            {'name': "id", 'type': "INT", 'width': 4},
             {'name': "empoyee_name", 'type': "VARCHAR", 'width': 40},
         ]
     },
@@ -136,13 +147,6 @@ test_data = [
         "columns": [
             {'name': "dept_no", 'type': "CHAR", 'width': 4},
             {'name': "dept_name", 'type': "VARCHAR", 'width': 40},
-        ]
-    },
-    {
-        "name": "status",
-        "columns": [
-            {'name': "current", 'type': "TINYINT", 'width': 4},
-            {'name': "start_date", 'type': "DATETIME", 'width': 40},
         ]
     },
 ]
