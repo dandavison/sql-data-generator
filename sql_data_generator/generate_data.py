@@ -1,10 +1,8 @@
-from sqlparse import parse
-from sqlparse import sql
-from sqlparse import tokens
+import sqlparse
 
 
 def generate_data(text):
-    statements = parse(text)
+    statements = sqlparse.parse(text)
     for create_table_stmnt in get_create_table_statements(statements):
         table_name = create_table_stmnt.get_name()
         columns = get_columns(create_table_stmnt)
@@ -14,44 +12,83 @@ def generate_data(text):
 
 
 def get_columns(create_table_stmnt):
-    has_foreign_key = False
-    columns = []
-    column = {}
-    for token in _get_tokens(create_table_stmnt):
 
-        if token.ttype == tokens.Name:
-            if 'name' in column:
-                assert is_complete_column(column)
-                columns.append(column)
-                column = {}
+    parenthesized_group = get_parenthesized_group(create_table_stmnt)
+    tokens = flatten_tokens(parenthesized_group.tokens)
+    tokens = filter_tokens(tokens)
+    token_groups = split_tokens_on_commas(tokens)
+
+    columns = []
+    for group in token_groups:
+
+        column = {}
+        token, group = group[0], group[1:]
+
+        if isinstance(token, sqlparse.sql.Identifier):
+            assert 'name' not in column
             column['name'] = token.value
         else:
-            import ipdb ; ipdb.set_trace()
+            assert (hasattr(token, 'ttype') and
+                    token.ttype == sqlparse.tokens.Keyword)
+            column['name'] = None
+            column['keyword'] = token.value
 
-    assert is_complete_column(column)
-    columns.append(column)
+        columns.append(column)
 
     return columns
+
+
+def flatten_tokens(tokens):
+    for token in tokens:
+        if isinstance(token, sqlparse.sql.IdentifierList):
+            for child_token in token.tokens:
+                yield child_token
+        else:
+            yield token
+
+
+def filter_tokens(tokens):
+    for token in tokens:
+        if not ((hasattr(token, 'ttype') and
+                 token.ttype == sqlparse.tokens.Whitespace) or
+                (hasattr(token, 'ttype') and
+                 token.ttype == sqlparse.tokens.Newline) or
+                token.match(sqlparse.tokens.Punctuation, '(') or
+                token.match(sqlparse.tokens.Punctuation, ')')):
+            yield token
+
+
+def split_tokens_on_commas(tokens):
+    group = []
+    for token in tokens:
+        if token.match(sqlparse.tokens.Punctuation, ','):
+            yield group
+            group = []
+        else:
+            group.append(token)
+    yield group
+
+
+def get_tokens(obj):
+    for child in obj.tokens:
+        if hasattr(child, 'tokens'):
+            for token in get_tokens(child):
+                yield token
+        else:
+            yield child
 
 
 def is_complete_column(column):
     return column.viewkeys() == {'name'}
 
 
-def _get_tokens(create_table_stmnt):
+def get_parenthesized_group(create_table_stmnt):
     for tok1 in create_table_stmnt.tokens:
-        if isinstance(tok1, sql.Function):
+        if isinstance(tok1, sqlparse.sql.Function):
             for tok2 in tok1.tokens:
-                if isinstance(tok2, sql.Parenthesis):
-                    for tok3 in tok2.tokens:
-                        if isinstance(tok3, sql.Identifier):
-                            [tok3] = tok3.tokens
-                            yield tok3
-                        elif isinstance(tok3, sql.IdentifierList):
-                            for tok4 in tok3.tokens:
-                                if isinstance(tok4, sql.Identifier):
-                                    [tok4] = tok4.tokens
-                                    yield tok4
+                if isinstance(tok2, sqlparse.sql.Parenthesis):
+                    return tok2
+    raise RuntimeError
 
 
 def get_create_table_statements(statements):
