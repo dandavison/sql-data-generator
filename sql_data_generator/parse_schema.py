@@ -43,6 +43,7 @@ KEYWORDS = dict(
     ]
 )
 
+
 # Add missing keywords to parser
 @mock.patch.object(sqlparse.lexer, 'KEYWORDS', KEYWORDS)
 def parse_schema(text):
@@ -51,7 +52,7 @@ def parse_schema(text):
     for create_table_stmnt in get_create_table_statements(statements):
         table_name = next_atomic_token_by_type(create_table_stmnt,
                                                sqlparse.tokens.Name).value
-        columns = get_columns(create_table_stmnt)
+        columns = parse_columns(create_table_stmnt)
         tables.append({
             'name': table_name,
             'columns': columns,
@@ -59,7 +60,7 @@ def parse_schema(text):
     return tables
 
 
-def get_columns(create_table_stmnt):
+def parse_columns(create_table_stmnt):
 
     parenthesized_group = get_parenthesized_group(create_table_stmnt)
     tokens = flatten_tokens(parenthesized_group.tokens)
@@ -67,47 +68,54 @@ def get_columns(create_table_stmnt):
     token_groups = split_tokens_on_commas(tokens)
 
     columns = {}
-    for group in token_groups:
+    for tokens in token_groups:
 
-        if isinstance(group[0], sqlparse.sql.Identifier):
-            token, group = group[0], group[1:]
-            column = {'name': token.value}
-            for token in group:
-                if isinstance(token, sqlparse.sql.Function):
-                    column_type, arguments = parse_unary_function(token)
-
-                    if column_type in COLUMN_TYPES:
-                        column.update({
-                            'type': column_type,
-                            'type_arguments': map(int, arguments.split(',')),
-                        })
-                    else:
-                        print >>sys.stderr, ("Unrecognized column type: %s" %
-                                             column_type)
-
-                elif is_token(token, sqlparse.tokens.Name.Builtin):
-                    column['type'] = token.value
-
+        if isinstance(tokens[0], sqlparse.sql.Identifier):
+            column = parse_column(tokens)
             columns[column['name']] = column
-
         else:
-            # key/constraint declaration
-            if is_keyword(group[0], CONSTRAINT):
-                group = iter(group)
-                for token in group:
-                    if is_keyword(token, FOREIGN):
-                        assert is_keyword(next(group), KEY)
-                        fk_column_name = (
-                            parse_single_parenthesized_expression(next(group)))
-                        assert is_keyword(next(group), REFERENCES)
-                        target_table_name, target_column_name = (
-                            parse_unary_function(next(group)))
-                        columns[fk_column_name].update({
-                            'foreign_key_table': target_table_name,
-                            'foreign_key_column': target_column_name,
-                        })
+            if is_keyword(tokens[0], CONSTRAINT):
+                update_with_foreign_key_info(columns, tokens)
 
     return columns.values()
+
+
+def parse_column(tokens):
+    token, tokens = tokens[0], tokens[1:]
+    column = {'name': token.value}
+    for token in tokens:
+        if isinstance(token, sqlparse.sql.Function):
+            column_type, arguments = parse_unary_function(token)
+
+            if column_type in COLUMN_TYPES:
+                column.update({
+                    'type': column_type,
+                    'type_arguments': map(int, arguments.split(',')),
+                })
+            else:
+                print >>sys.stderr, ("Unrecognized column type: %s" %
+                                     column_type)
+
+        elif is_token(token, sqlparse.tokens.Name.Builtin):
+            column['type'] = token.value
+
+    return column
+
+
+def update_with_foreign_key_info(columns, tokens):
+    tokens = iter(tokens)
+    for token in tokens:
+        if is_keyword(token, FOREIGN):
+            assert is_keyword(next(tokens), KEY)
+            fk_column_name = (
+                parse_single_parenthesized_expression(next(tokens)))
+            assert is_keyword(next(tokens), REFERENCES)
+            target_table_name, target_column_name = (
+                parse_unary_function(next(tokens)))
+            columns[fk_column_name].update({
+                'foreign_key_table': target_table_name,
+                'foreign_key_column': target_column_name,
+            })
 
 
 def flatten_tokens(tokens):
