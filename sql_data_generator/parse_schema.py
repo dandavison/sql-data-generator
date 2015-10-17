@@ -1,3 +1,19 @@
+"""
+Parse (my)SQL schema.
+
+For each CREATE TABLE statement output a parsed table of the form:
+
+{'name': <table_name>, 'columns': [column]}
+
+where `column` is of the form
+
+{
+  'name': string,
+  'type': "int"|"varchar"|etc,
+  'type_arguments': [int],
+  'foreign_key_table': string|None
+}
+"""
 import mock
 import sqlparse
 
