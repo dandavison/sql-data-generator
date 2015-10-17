@@ -1,7 +1,7 @@
 import sqlparse
 
 
-def get_column_definitions(text):
+def parse_schema(text):
     statements = sqlparse.parse(text)
     tables = []
     for create_table_stmnt in get_create_table_statements(statements):
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     import sys
     [path] = sys.argv[1:]
     with open(path) as fp:
-        tables = get_column_definitions(fp.read())
+        tables = parse_schema(fp.read())
 
     for table in tables:
         print table['name']
