@@ -90,12 +90,12 @@ class Tables(object):
 
         for table in tables:
             table_name, table = table, tables[table]
-            if table['visited'] is False:
+            for foreign_key_table_name in self.get_foreign_key_table_names(table['columns']):
+                if tables[foreign_key_table_name]['visited'] is False:
+                    statements.extend(self.generate_rows(foreign_key_table_name))
 
-                for foreign_key_table_name in self.get_foreign_key_table_names(table['columns']):
-                        statements.extend(self.generate_rows(foreign_key_table_name))
+            if tables[table_name]['visited'] is False:
                 statements.extend(self.generate_rows(table_name))
-
         return self.write_statements_to_file(statements)
 
     def get_foreign_key_table_names(self, columns):
@@ -151,10 +151,23 @@ test_data = [
         ]
     },
     {
-        "name": "departments",
+        "name": "schedule",
         "columns": [
             {'name': "dept_no", 'type': "CHAR", 'width': 4},
             {'name': "dept_name", 'type': "VARCHAR", 'width': 40},
+            {'name': "employee_id", 'type': "INT", 'width': 4,
+             "foreign_key_table": "employees"},
+            {'name': "department_id", 'type': "INT", 'width': 4,
+             "foreign_key_table": "departments"},
+        ]
+    },
+    {
+        "name": "departments",
+        "columns": [
+            {'name': "id", 'type': "CHAR", 'width': 4},
+            {'name': "dept_name", 'type': "VARCHAR", 'width': 40},
+            {'name': "employee_id", 'type': "INT", 'width': 4,
+             "foreign_key_table": "employees"},
         ]
     },
 ]
