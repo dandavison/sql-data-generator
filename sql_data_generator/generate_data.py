@@ -7,8 +7,8 @@ def generate_data(text):
     statements = parse(text)
     for create_table_stmnt in get_create_table_statements(statements):
         table_name = create_table_stmnt.get_name()
-        columns, has_foreign_key = get_columns(create_table_stmnt)
-        print table_name, '*' if has_foreign_key else ''
+        columns = get_columns(create_table_stmnt)
+        print table_name
         for column in columns:
             print '\t', column
 
@@ -17,11 +17,8 @@ def get_columns(create_table_stmnt):
     has_foreign_key = False
     columns = []
     for column in _get_columns(create_table_stmnt):
-        if is_foreign_key_info(column):
-            has_foreign_key = True
-        else:
-            columns.append(column)
-    return columns, has_foreign_key
+        columns.append(column)
+    return columns
 
 
 def _get_columns(create_table_stmnt):
@@ -36,10 +33,6 @@ def _get_columns(create_table_stmnt):
                             for tok4 in tok3.tokens:
                                 if isinstance(tok4, sql.Identifier):
                                     yield tok4
-                                elif isinstance(tok4, sql.Token):
-                                    if tok4.ttype == tokens.Keyword:
-                                        if is_foreign_key_info(tok4):
-                                            yield tok4
 
 
 def get_create_table_statements(statements):
