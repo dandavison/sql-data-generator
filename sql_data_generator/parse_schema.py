@@ -16,7 +16,8 @@ def parse_schema(text):
     statements = sqlparse.parse(text)
     tables = []
     for create_table_stmnt in get_create_table_statements(statements):
-        table_name = create_table_stmnt.get_name()
+        table_name = next_atomic_token_by_type(create_table_stmnt,
+                                               sqlparse.tokens.Name).value
         columns = get_columns(create_table_stmnt)
         tables.append({
             'name': table_name,
@@ -97,13 +98,19 @@ def split_tokens_on_commas(tokens):
     yield group
 
 
-def get_tokens(obj):
+def get_atomic_tokens(obj):
     for child in obj.tokens:
         if hasattr(child, 'tokens'):
-            for token in get_tokens(child):
+            for token in get_atomic_tokens(child):
                 yield token
         else:
             yield child
+
+
+def next_atomic_token_by_type(obj, ttype):
+    return next(tok
+                for tok in get_atomic_tokens(obj)
+                if tok.ttype == ttype)
 
 
 def is_complete_column(column):
