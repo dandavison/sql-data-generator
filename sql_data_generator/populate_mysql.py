@@ -130,7 +130,7 @@ class Tables(object):
         with open(FILEPATH, 'w') as f:
             for statement in statements:
                 f.write(statement + "\n\n")
-        print statements
+                print statement
 
 
 test_data = [
