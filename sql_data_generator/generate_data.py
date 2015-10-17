@@ -1,14 +1,17 @@
 import sqlparse
 
 
-def generate_data(text):
+def get_column_definitions(text):
     statements = sqlparse.parse(text)
+    tables = []
     for create_table_stmnt in get_create_table_statements(statements):
         table_name = create_table_stmnt.get_name()
         columns = get_columns(create_table_stmnt)
-        print table_name
-        for column in columns:
-            print '\t', column
+        tables.append({
+            'name': table_name,
+            'columns': columns,
+        })
+    return tables
 
 
 def get_columns(create_table_stmnt):
@@ -32,6 +35,11 @@ def get_columns(create_table_stmnt):
                     token.ttype == sqlparse.tokens.Keyword)
             column['name'] = None
             column['keyword'] = token.value
+
+        for token in group:
+            if (isinstance(token, sqlparse.sql.Function) or (
+                    is_token(token, sqlparse.tokens.Name.Builtin))):
+                column['type'] = token.value
 
         columns.append(column)
 
@@ -107,4 +115,9 @@ if __name__ == '__main__':
     import sys
     [path] = sys.argv[1:]
     with open(path) as fp:
-        generate_data(fp.read())
+        tables = get_column_definitions(fp.read())
+
+    for table in tables:
+        print table['name']
+        for column in table['columns']:
+            print '\t', column
