@@ -79,35 +79,43 @@ class Tables(object):
 
         for table in table_list:
             name = table['name']
-            table_dict[name] = {}
-            table_dict[name]['columns'] = table['columns']
-            table_dict[name]['visited'] = False
+            table_dict[name] = table
+            table['visited'] = False
 
         return table_dict
 
     def generate_rows_all_tables(self):
         tables = self.table_dict
         statements = []
+
         for table in tables:
-            statements.append(self.generate_rows(table))
+            table_name, table = table, tables[table]
+            if table['visited'] is False:
+
+                for foreign_key_table_name in self.get_foreign_key_table_names(table['columns']):
+                        statements.extend(self.generate_rows(foreign_key_table_name))
+                statements.extend(self.generate_rows(table_name))
 
         return self.write_statements_to_file(statements)
 
+    def get_foreign_key_table_names(self, columns):
+        foreign_key_tables = []
+        for column in columns:
+            if 'foreign_key_table' in column:
+                foreign_key_tables.append(column['foreign_key_table'])
+        return foreign_key_tables
+
     def generate_rows(self, table_name):
         table = self.table_dict[table_name]
+        table['visited'] = True
         columns = []
         values = []
-
         for column in table['columns']:
-            if 'foreign_key_table' in column:
-                import ipdb; ipdb.set_trace()
-
-                self.generate_rows(self.table_dict['foreign_key_table'])
             columns.append(column['name'])
             random_data = self.get_random_data(column['type'])
             values.append(random_data)
 
-        return self.insert_statement(table_name, columns, values)
+        return [self.insert_statement(table_name, columns, values)]
 
     def get_random_data(self, data_type):
         return data_type_map[data_type]['return']
