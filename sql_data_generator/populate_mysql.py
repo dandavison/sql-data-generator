@@ -171,3 +171,8 @@ test_data = [
         ]
     },
 ]
+
+
+if __name__ == '__main__':
+    tables = Tables(test_data)
+    tables.generate_rows_all_tables()
