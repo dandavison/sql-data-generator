@@ -89,12 +89,17 @@ def is_complete_column(column):
 
 
 def get_parenthesized_group(create_table_stmnt):
-    for tok1 in create_table_stmnt.tokens:
-        if isinstance(tok1, sqlparse.sql.Function):
-            for tok2 in tok1.tokens:
-                if isinstance(tok2, sqlparse.sql.Parenthesis):
-                    return tok2
-    raise RuntimeError
+    hack = True
+    if hack:
+        # FIXME
+        return create_table_stmnt.tokens[5].tokens[0].tokens[0].tokens[2]
+    else:
+        for tok1 in create_table_stmnt.tokens:
+            if isinstance(tok1, sqlparse.sql.Function):
+                for tok2 in tok1.tokens:
+                    if isinstance(tok2, sqlparse.sql.Parenthesis):
+                        return tok2
+        raise RuntimeError
 
 
 def get_create_table_statements(statements):
