@@ -38,31 +38,30 @@ FILEPATH = '/tmp/statements.sql'
 
 data_type_map = {
 
-    "INT": {
-        "return": '1',
-        # "options": [
-        #     ("M", 4),
-        #     ("NOT NULL", False),
-        #     ("AUTO_INCREMENT", False),
-        # ]
+    "BIGINT": {
+        "return": '99999999999',
     },
-
-    "TINYINT": {
-        "return": '0',
-    },
-
-    "DATETIME": {
-        "return": '"2013-05-29 16:02:33"',
-    },
-
-    "LONGTEXT": {
-        "return": '"longtext"',
-    },
-
     "CHAR": {
         "return": '"char"',
     },
-
+    "DATETIME": {
+        "return": '"2013-05-29 16:02:33"',
+    },
+    "DECIMAL": {
+        "return": '0.21345',
+    },
+    "INT": {
+        "return": '1234',
+    },
+    "LONGTEXT": {
+        "return": '"longtext"',
+    },
+    "SMALLINT": {
+        "return": '1',
+    },
+    "TINYINT": {
+        "return": '0',
+    },
     "VARCHAR": {
         "return": '"varchar"',
     },
