@@ -97,9 +97,6 @@ def parse_column(tokens):
                 print >>sys.stderr, ("Unrecognized column type: %s" %
                                      column_type)
 
-        elif is_token(token, sqlparse.tokens.Name.Builtin):
-            column['type'] = token.value
-
     return column
 
 
