@@ -86,7 +86,7 @@ class Tables(object):
     def get_foreign_key_table_names(self, columns):
         foreign_key_tables = []
         for column in columns:
-            if 'foreign_key_table' in column:
+            if column['foreign_key_table'] is not None:
                 foreign_key_tables.append(column['foreign_key_table'])
         return foreign_key_tables
 
