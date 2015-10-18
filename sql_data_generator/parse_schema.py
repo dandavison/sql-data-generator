@@ -93,12 +93,7 @@ def parse_column(tokens):
         column_type, arguments = parse_unary_function(token)
         arguments = map(int, arguments.split(','))
     else:
-        try:
-            assert is_token(token, sqlparse.tokens.Name.Builtin)
-        except Exception as ex:
-            print "%s: %s" % (ex.__class__.__name__, ex)
-            import ipdb ; ipdb.set_trace()
-
+        assert is_token(token, sqlparse.tokens.Name.Builtin)
         column_type = token.value
         arguments = None
 
