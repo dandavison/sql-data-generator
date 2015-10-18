@@ -17,13 +17,16 @@ where `column` is of the form
 """
 import mock
 import sqlparse
+import sys
 
 
 COLUMN_TYPES = {
     'bigint',
     'char',
+    'date',
     'datetime',
     'decimal',
+    'double',
     'int',
     'longtext',
     'smallint',
@@ -84,18 +87,29 @@ def parse_columns(create_table_stmnt):
 def parse_column(tokens):
     token, tokens = tokens[0], tokens[1:]
     column = {'name': token.value}
-    for token in tokens:
-        if isinstance(token, sqlparse.sql.Function):
-            column_type, arguments = parse_unary_function(token)
+    token, tokens = tokens[0], tokens[1:]
 
-            if column_type in COLUMN_TYPES:
-                column.update({
-                    'type': column_type,
-                    'type_arguments': map(int, arguments.split(',')),
-                })
-            else:
-                print >>sys.stderr, ("Unrecognized column type: %s" %
-                                     column_type)
+    if isinstance(token, sqlparse.sql.Function):
+        column_type, arguments = parse_unary_function(token)
+        arguments = map(int, arguments.split(','))
+    else:
+        try:
+            assert is_token(token, sqlparse.tokens.Name.Builtin)
+        except Exception as ex:
+            print "%s: %s" % (ex.__class__.__name__, ex)
+            import ipdb ; ipdb.set_trace()
+
+        column_type = token.value
+        arguments = None
+
+    if column_type in COLUMN_TYPES:
+        column.update({
+            'type': column_type,
+            'type_arguments': arguments,
+        })
+    else:
+        print >>sys.stderr, ("Unrecognized column type: %s" %
+                             column_type)
 
     return column
 
