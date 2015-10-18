@@ -36,11 +36,9 @@ COLUMN_TYPES = {
 }
 
 CONSTRAINT = 'CONSTRAINT'
-DEFAULT = 'DEFAULT'
 FOREIGN = 'FOREIGN'
 KEY = 'KEY'
-NOT = 'NOT'
-NULL = 'NULL'
+NOT_NULL = 'NOT NULL'
 REFERENCES = 'REFERENCES'
 
 KEYWORDS = dict(
@@ -110,16 +108,8 @@ def parse_column(tokens):
         print >>sys.stderr, ("Unrecognized column type: %s" %
                              column_type)
 
-    column['nullable'] = True
-    prev = None
-    for curr in tokens:
-        if is_keyword(curr, NULL):
-            assert prev
-            column['nullable'] = {
-                (NOT, NULL): False,
-                (DEFAULT, NULL): True,
-            }[prev.value, curr.value]
-        prev = curr
+    column['nullable'] = not any(is_keyword(token, NOT_NULL)
+                                 for token in tokens)
 
     return column
 
