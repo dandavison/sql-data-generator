@@ -94,17 +94,12 @@ class Tables(object):
 
     def generate_rows_all_tables(self):
         tables = self.table_dict
-        statements = []
+        self.statements = []
 
         for table_name in tables:
-            table = tables[table_name]
+            self.generate_rows(table_name)
 
-            for foreign_key_table_name in self.get_foreign_key_table_names(table['columns']):
-                statements.extend(self.generate_rows(foreign_key_table_name))
-
-            statements.extend(self.generate_rows(table_name))
-
-        return self.write_statements_to_file(statements)
+        return self.write_statements_to_file(self.statements)
 
     def get_foreign_key_table_names(self, columns):
         foreign_key_tables = []
@@ -115,9 +110,14 @@ class Tables(object):
 
     def generate_rows(self, table_name):
         table = self.table_dict[table_name]
+
         if table['visited']:
             return []
         table['visited'] = True
+
+        for foreign_key_table_name in self.get_foreign_key_table_names(table['columns']):
+            self.generate_rows(foreign_key_table_name)
+
         columns = []
         values = []
         for column in table['columns']:
@@ -125,7 +125,11 @@ class Tables(object):
             random_data = self.get_random_data(column['type'])
             values.append(random_data)
 
-        return [self.insert_statement(table_name, columns, values)]
+        rows = [self.insert_statement(table_name, columns, values)]
+
+        self.statements.extend(rows)
+
+
 
     def get_random_data(self, data_type):
         return data_type_map[data_type]['return']
