@@ -13,6 +13,7 @@ where `column` is of the form
   'type_arguments': [int],
   'foreign_key_table': string|None,
   'foreign_key_column': string|None,
+  'nullable': True|False,
 }
 """
 import mock
@@ -35,8 +36,11 @@ COLUMN_TYPES = {
 }
 
 CONSTRAINT = 'CONSTRAINT'
+DEFAULT = 'DEFAULT'
 FOREIGN = 'FOREIGN'
 KEY = 'KEY'
+NOT = 'NOT'
+NULL = 'NULL'
 REFERENCES = 'REFERENCES'
 
 KEYWORDS = dict(
@@ -105,6 +109,17 @@ def parse_column(tokens):
     else:
         print >>sys.stderr, ("Unrecognized column type: %s" %
                              column_type)
+
+    column['nullable'] = True
+    prev = None
+    for curr in tokens:
+        if is_keyword(curr, NULL):
+            assert prev
+            column['nullable'] = {
+                (NOT, NULL): False,
+                (DEFAULT, NULL): True,
+            }[prev.value, curr.value]
+        prev = curr
 
     return column
 
