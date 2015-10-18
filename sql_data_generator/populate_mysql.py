@@ -31,8 +31,9 @@ VALUES
 );
 
 """
+import sys
 
-
+VISITING = 'VISITING'
 FILEPATH = '/tmp/statements.sql'
 
 
@@ -111,9 +112,13 @@ class Tables(object):
     def generate_rows(self, table_name):
         table = self.table_dict[table_name]
 
-        if table['visited']:
+        if table['visited'] is True:
             return []
-        table['visited'] = True
+        elif table['visited'] == VISITING:
+            print >>sys.stderr, "Cycle detected involving table %s" % table_name
+            return []
+        else:
+            table['visited'] = VISITING
 
         for foreign_key_table_name in self.get_foreign_key_table_names(table['columns']):
             self.generate_rows(foreign_key_table_name)
@@ -129,6 +134,7 @@ class Tables(object):
 
         self.statements.extend(rows)
 
+        table['visited'] = True
 
 
     def get_random_data(self, data_type):
