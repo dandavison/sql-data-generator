@@ -1,25 +1,6 @@
 """
-Get n rows of random mysql data given the following structure
-
-[
-    {
-    "name": "employees",
-    "columns": [
-            {'name': "employee_no", 'type': "CHAR", 'width': 4},
-            {'name': "empoyee_name", 'type': "VARCHAR", 'width': 40},
-        ]
-    },
-
-    {
-    "name": "departments",
-    "columns": [
-            {'name': "dept_no", 'type': "CHAR", 'width': 4},
-            {'name': "dept_name", 'type': "VARCHAR", 'width': 40},
-        ]
-    },
-]
-
-Return insert statements in correct SQL syntax:
+Given a parsed mysql schema file, return insert statements
+in correct SQL syntax:
 
 INSERT INTO employees
 (
@@ -27,7 +8,7 @@ employee_no, employee_name
 )
 VALUES
 (
-0002, "sdfjkewr ldfj"
+1, "a"
 );
 
 """
@@ -43,13 +24,13 @@ data_type_map = {
         "return": '1',
     },
     "char": {
-        "return": '"char"',
+        "return": '"c"',
     },
     "CHARACTER": {
-        "return": '"char"',
+        "return": '"c"',
     },
     "date": {
-        "return": '"2013-05-29 16:02:33"',
+        "return": '"2013-05-29"',
     },
     "datetime": {
         "return": '"2013-05-29 16:02:33"',
@@ -73,7 +54,7 @@ data_type_map = {
         "return": '1',
     },
     "varchar": {
-        "return": '"varchar"',
+        "return": '"v"',
     },
 }
 
@@ -97,8 +78,9 @@ class Tables(object):
         tables = self.table_dict
         self.statements = []
 
-        for table_name in tables:
-            self.generate_rows(table_name)
+        for table in tables.iteritems():
+            import ipdb; ipdb.set_trace()
+            self.generate_rows(table)
 
         return self.write_statements_to_file(self.statements)
 
@@ -109,33 +91,33 @@ class Tables(object):
                 foreign_key_tables.append(column['foreign_key_table'])
         return foreign_key_tables
 
-    def generate_rows(self, table_name):
-        table = self.table_dict[table_name]
-
+    def generate_rows(self, table):
+        import ipdb; ipdb.set_trace()
         if table['visited'] is True:
             return []
         elif table['visited'] == VISITING:
-            print >>sys.stderr, "Cycle detected involving table %s" % table_name
+            print >>sys.stderr, (
+                "Cycle detected involving table %s" % table['name'])
             return []
         else:
             table['visited'] = VISITING
 
-        for foreign_key_table_name in self.get_foreign_key_table_names(table['columns']):
-            self.generate_rows(foreign_key_table_name)
+        for table['name'] in self.get_foreign_key_table_names(table['columns']):
+            self.generate_rows(table)
 
         columns = []
         values = []
         for column in table['columns']:
-            columns.append(column['name'])
-            random_data = self.get_random_data(column['type'])
-            values.append(random_data)
+            if column['nullable'] is True:
+                columns.append(column['name'])
+                random_data = self.get_random_data(column['type'])
+                values.append(random_data)
 
-        rows = [self.insert_statement(table_name, columns, values)]
+        rows = [self.insert_statement(table['name'], columns, values)]
 
         self.statements.extend(rows)
 
         table['visited'] = True
-
 
     def get_random_data(self, data_type):
         return data_type_map[data_type]['return']
@@ -157,42 +139,104 @@ test_data = [
     {
         "name": "status",
         "columns": [
-            {'name': "current", 'type': "TINYINT", 'type_arguments': 4},
-            {'name': "start_date", 'type': "DATETIME", 'type_arguments': 40},
-            {'name': "employee_id", 'type': "INT", 'type_arguments': 4,
-             "foreign_key_table": "employees"},
+            {'name': "current",
+             'type': "TINYINT",
+             'type_arguments': 4,
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "start_date",
+             'type': "DATETIME",
+             'type_arguments': 40,
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "employee_id",
+             'type': "INT",
+             'type_arguments': 4,
+             'foreign_key_column': "id",
+             'foreign_key_table': "employees",
+             'nullable': False},
         ]
     },
     {
         "name": "employees",
         "columns": [
-            {'name': "id", 'type': "INT", 'type_arguments': 4},
-            {'name': "empoyee_name", 'type': "VARCHAR", 'type_arguments': 40},
+            {'name': "id",
+             'type': "INT",
+             'type_arguments': 4,
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "empoyee_name",
+             'type': "VARCHAR",
+             'type_arguments': 40,
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "dept_id",
+             'type': "INT",
+             'type_arguments': 4,
+             'foreign_key_column': "id",
+             "foreign_key_table": "departments",
+             'nullable': True},
         ]
     },
     {
         "name": "schedule",
         "columns": [
-            {'name': "dept_no", 'type': "CHAR", 'type_arguments': 4},
-            {'name': "dept_name", 'type': "VARCHAR", 'type_arguments': 40},
-            {'name': "employee_id", 'type': "INT", 'type_arguments': 4,
-             "foreign_key_table": "employees"},
-            {'name': "department_id", 'type': "INT", 'type_arguments': 4,
-             "foreign_key_table": "departments"},
+            {'name': "dept_no",
+             'type': "CHAR",
+             'type_arguments': 4,
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "dept_name",
+             'type': "VARCHAR",
+             'type_arguments': 40,
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "employee_id",
+             'type': "INT",
+             'type_arguments': 4,
+             'foreign_key_column': "id",
+             "foreign_key_table": "employees",
+             'nullable': True},
+            {'name': "department_id",
+             'type': "INT",
+             'type_arguments': 4,
+             'foreign_key_column': "id",
+             "foreign_key_table": "departments",
+             'nullable': False},
         ]
     },
     {
         "name": "departments",
         "columns": [
-            {'name': "id", 'type': "CHAR", 'type_arguments': 4},
-            {'name': "dept_name", 'type': "VARCHAR", 'type_arguments': 40},
-            {'name': "employee_id", 'type': "INT", 'type_arguments': 4,
-             "foreign_key_table": "employees"},
+            {'name': "id",
+             'type': "CHAR",
+             'type_arguments': 4,
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "dept_name",
+             'type': "VARCHAR",
+             'type_arguments': 40,
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "employee_id",
+             'type': "INT",
+             'type_arguments': 4,
+             'foreign_key_column': "id",
+             "foreign_key_table": "employees",
+             'nullable': True},
         ]
     },
 ]
 
 
-if __name__ == '__main__':
-    tables = Tables(schema)
-    tables.generate_rows_all_tables()
+# if __name__ == '__main__':
+#     tables = Tables(schema)
+#     tables.generate_rows_all_tables()
