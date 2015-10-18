@@ -78,9 +78,8 @@ class Tables(object):
         tables = self.table_dict
         self.statements = []
 
-        for table in tables.iteritems():
-            import ipdb; ipdb.set_trace()
-            self.generate_rows(table)
+        for table_name in tables:
+            self.generate_rows(table_name)
 
         return self.write_statements_to_file(self.statements)
 
@@ -91,33 +90,33 @@ class Tables(object):
                 foreign_key_tables.append(column['foreign_key_table'])
         return foreign_key_tables
 
-    def generate_rows(self, table):
-        import ipdb; ipdb.set_trace()
+    def generate_rows(self, table_name):
+        table = self.table_dict[table_name]
+
         if table['visited'] is True:
             return []
         elif table['visited'] == VISITING:
-            print >>sys.stderr, (
-                "Cycle detected involving table %s" % table['name'])
+            print >>sys.stderr, "Cycle detected involving table %s" % table_name
             return []
         else:
             table['visited'] = VISITING
 
-        for table['name'] in self.get_foreign_key_table_names(table['columns']):
-            self.generate_rows(table)
+        for foreign_key_table_name in self.get_foreign_key_table_names(table['columns']):
+            self.generate_rows(foreign_key_table_name)
 
         columns = []
         values = []
         for column in table['columns']:
-            if column['nullable'] is True:
-                columns.append(column['name'])
-                random_data = self.get_random_data(column['type'])
-                values.append(random_data)
+            columns.append(column['name'])
+            random_data = self.get_random_data(column['type'])
+            values.append(random_data)
 
-        rows = [self.insert_statement(table['name'], columns, values)]
+        rows = [self.insert_statement(table_name, columns, values)]
 
         self.statements.extend(rows)
 
         table['visited'] = True
+
 
     def get_random_data(self, data_type):
         return data_type_map[data_type]['return']
@@ -237,6 +236,6 @@ test_data = [
 ]
 
 
-# if __name__ == '__main__':
-#     tables = Tables(schema)
-#     tables.generate_rows_all_tables()
+if __name__ == '__main__':
+    tables = Tables(schema)
+    tables.generate_rows_all_tables()
