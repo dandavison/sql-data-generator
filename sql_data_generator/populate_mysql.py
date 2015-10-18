@@ -38,31 +38,40 @@ FILEPATH = '/tmp/statements.sql'
 
 data_type_map = {
 
-    "BIGINT": {
+    "bigint": {
         "return": '99999999999',
     },
-    "CHAR": {
+    "char": {
         "return": '"char"',
     },
-    "DATETIME": {
+    "CHARACTER": {
+        "return": '"char"',
+    },
+    "date": {
         "return": '"2013-05-29 16:02:33"',
     },
-    "DECIMAL": {
+    "datetime": {
+        "return": '"2013-05-29 16:02:33"',
+    },
+    "decimal": {
         "return": '0.21345',
     },
-    "INT": {
+    "double": {
+        "return": '0.21345',
+    },
+    "int": {
         "return": '1234',
     },
-    "LONGTEXT": {
+    "longtext": {
         "return": '"longtext"',
     },
-    "SMALLINT": {
+    "smallint": {
         "return": '1',
     },
-    "TINYINT": {
+    "tinyint": {
         "return": '0',
     },
-    "VARCHAR": {
+    "varchar": {
         "return": '"varchar"',
     },
 }
@@ -113,7 +122,10 @@ class Tables(object):
         values = []
         for column in table['columns']:
             columns.append(column['name'])
-            random_data = self.get_random_data(column['type'])
+            try:
+                random_data = self.get_random_data(column['type'])
+            except:
+                import ipdb; ipdb.set_trace()
             values.append(random_data)
 
         return [self.insert_statement(table_name, columns, values)]
@@ -175,5 +187,5 @@ test_data = [
 
 
 if __name__ == '__main__':
-    tables = Tables(test_data)
+    tables = Tables(schema)
     tables.generate_rows_all_tables()

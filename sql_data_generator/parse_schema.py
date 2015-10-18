@@ -40,6 +40,7 @@ KEYWORDS = dict(
     sqlparse.keywords.KEYWORDS.items() + [
         ('DATETIME', sqlparse.tokens.Name.Builtin),
         ('LONGTEXT', sqlparse.tokens.Name.Builtin),
+        ('DOUBLE', sqlparse.tokens.Name.Builtin),
     ]
 )
 
