@@ -1,25 +1,6 @@
 """
-Get n rows of random mysql data given the following structure
-
-[
-    {
-    "name": "employees",
-    "columns": [
-            {'name': "employee_no", 'type': "CHAR", 'width': 4},
-            {'name': "empoyee_name", 'type': "VARCHAR", 'width': 40},
-        ]
-    },
-
-    {
-    "name": "departments",
-    "columns": [
-            {'name': "dept_no", 'type': "CHAR", 'width': 4},
-            {'name': "dept_name", 'type': "VARCHAR", 'width': 40},
-        ]
-    },
-]
-
-Return insert statements in correct SQL syntax:
+Given a parsed mysql schema file, return insert statements
+in correct SQL syntax:
 
 INSERT INTO employees
 (
@@ -27,7 +8,7 @@ employee_no, employee_name
 )
 VALUES
 (
-0002, "sdfjkewr ldfj"
+1, "a"
 );
 
 """
@@ -43,13 +24,13 @@ data_type_map = {
         "return": '1',
     },
     "char": {
-        "return": '"char"',
+        "return": '"c"',
     },
     "CHARACTER": {
-        "return": '"char"',
+        "return": '"c"',
     },
     "date": {
-        "return": '"2013-05-29 16:02:33"',
+        "return": '"2013-05-29"',
     },
     "datetime": {
         "return": '"2013-05-29 16:02:33"',
@@ -73,7 +54,7 @@ data_type_map = {
         "return": '1',
     },
     "varchar": {
-        "return": '"varchar"',
+        "return": '"v"',
     },
 }
 
@@ -105,7 +86,7 @@ class Tables(object):
     def get_foreign_key_table_names(self, columns):
         foreign_key_tables = []
         for column in columns:
-            if 'foreign_key_table' in column:
+            if column['foreign_key_table'] is not None:
                 foreign_key_tables.append(column['foreign_key_table'])
         return foreign_key_tables
 
@@ -157,42 +138,104 @@ test_data = [
     {
         "name": "status",
         "columns": [
-            {'name': "current", 'type': "TINYINT", 'type_arguments': 4},
-            {'name': "start_date", 'type': "DATETIME", 'type_arguments': 40},
-            {'name': "employee_id", 'type': "INT", 'type_arguments': 4,
-             "foreign_key_table": "employees"},
+            {'name': "current",
+             'type': "tinyint",
+             'type_arguments': [4],
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "start_date",
+             'type': "datetime",
+             'type_arguments': [40],
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "employee_id",
+             'type': "int",
+             'type_arguments': [4],
+             'foreign_key_column': "id",
+             'foreign_key_table': "employees",
+             'nullable': False},
         ]
     },
     {
         "name": "employees",
         "columns": [
-            {'name': "id", 'type': "INT", 'type_arguments': 4},
-            {'name': "empoyee_name", 'type': "VARCHAR", 'type_arguments': 40},
+            {'name': "id",
+             'type': "int",
+             'type_arguments': [4],
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "empoyee_name",
+             'type': "varchar",
+             'type_arguments': [40],
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "dept_id",
+             'type': "int",
+             'type_arguments': [4],
+             'foreign_key_column': "id",
+             "foreign_key_table": "departments",
+             'nullable': True},
         ]
     },
     {
         "name": "schedule",
         "columns": [
-            {'name': "dept_no", 'type': "CHAR", 'type_arguments': 4},
-            {'name': "dept_name", 'type': "VARCHAR", 'type_arguments': 40},
-            {'name': "employee_id", 'type': "INT", 'type_arguments': 4,
-             "foreign_key_table": "employees"},
-            {'name': "department_id", 'type': "INT", 'type_arguments': 4,
-             "foreign_key_table": "departments"},
+            {'name': "dept_no",
+             'type': "char",
+             'type_arguments': [4],
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "dept_name",
+             'type': "varchar",
+             'type_arguments': [40],
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "employee_id",
+             'type': "int",
+             'type_arguments': [4],
+             'foreign_key_column': "id",
+             "foreign_key_table": "employees",
+             'nullable': True},
+            {'name': "department_id",
+             'type': "int",
+             'type_arguments': [4],
+             'foreign_key_column': "id",
+             "foreign_key_table": "departments",
+             'nullable': False},
         ]
     },
     {
         "name": "departments",
         "columns": [
-            {'name': "id", 'type': "CHAR", 'type_arguments': 4},
-            {'name': "dept_name", 'type': "VARCHAR", 'type_arguments': 40},
-            {'name': "employee_id", 'type': "INT", 'type_arguments': 4,
-             "foreign_key_table": "employees"},
+            {'name': "id",
+             'type': "char",
+             'type_arguments': [4],
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "dept_name",
+             'type': "varchar",
+             'type_arguments': [40],
+             'foreign_key_table': None,
+             'foreign_key_column': None,
+             'nullable': False},
+            {'name': "employee_id",
+             'type': "int",
+             'type_arguments': [4],
+             'foreign_key_column': "id",
+             "foreign_key_table": "employees",
+             'nullable': True},
         ]
     },
 ]
 
 
 if __name__ == '__main__':
-    tables = Tables(schema)
+    tables = Tables(test_data)
     tables.generate_rows_all_tables()
