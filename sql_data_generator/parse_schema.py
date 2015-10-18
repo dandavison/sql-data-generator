@@ -231,12 +231,8 @@ def is_keyword(obj, keyword):
 
 
 if __name__ == '__main__':
+    import json
     import sys
     [path] = sys.argv[1:]
     with open(path) as fp:
-        tables = parse_schema(fp.read())
-
-    for table in tables:
-        print table['name']
-        for column in table['columns']:
-            print '\t', column
+        json.dump(parse_schema(fp.read()), sys.stdout, indent=2)
