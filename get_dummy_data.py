@@ -1,10 +1,11 @@
 from sql_data_generator import parse_schema, populate_mysql
 
-SCHEMA_FILE = "schema.sql"
-
 
 if __name__ == '__main__':
-    with open(SCHEMA_FILE, 'r') as f:
+    import sys
+    [schema_file] = sys.argv[1:]
+
+    with open(schema_file, 'r') as f:
         schema = f.read()
 
     parsed_schema = parse_schema.parse_schema(schema)
