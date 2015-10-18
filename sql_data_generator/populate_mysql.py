@@ -122,10 +122,7 @@ class Tables(object):
         values = []
         for column in table['columns']:
             columns.append(column['name'])
-            try:
-                random_data = self.get_random_data(column['type'])
-            except:
-                import ipdb; ipdb.set_trace()
+            random_data = self.get_random_data(column['type'])
             values.append(random_data)
 
         return [self.insert_statement(table_name, columns, values)]
