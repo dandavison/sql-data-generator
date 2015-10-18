@@ -40,7 +40,7 @@ FILEPATH = '/tmp/statements.sql'
 data_type_map = {
 
     "bigint": {
-        "return": '99999999999',
+        "return": '1',
     },
     "char": {
         "return": '"char"',
@@ -61,7 +61,7 @@ data_type_map = {
         "return": '0.21345',
     },
     "int": {
-        "return": '1234',
+        "return": '1',
     },
     "longtext": {
         "return": '"longtext"',
@@ -70,7 +70,7 @@ data_type_map = {
         "return": '1',
     },
     "tinyint": {
-        "return": '0',
+        "return": '1',
     },
     "varchar": {
         "return": '"varchar"',
