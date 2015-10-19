@@ -86,7 +86,7 @@ class Tables(object):
     def get_foreign_key_table_names(self, columns):
         foreign_key_tables = []
         for column in columns:
-            if column['foreign_key_table'] is not None:
+            if 'foreign_key_table' in column and column['foreign_key_table'] is not None:
                 foreign_key_tables.append(column['foreign_key_table'])
         return foreign_key_tables
 
@@ -107,9 +107,10 @@ class Tables(object):
         columns = []
         values = []
         for column in table['columns']:
-            columns.append(column['name'])
-            random_data = self.get_random_data(column['type'])
-            values.append(random_data)
+            if column['nullable'] is False:
+                columns.append(column['name'])
+                random_data = self.get_random_data(column['type'])
+                values.append(random_data)
 
         rows = [self.insert_statement(table_name, columns, values)]
 
